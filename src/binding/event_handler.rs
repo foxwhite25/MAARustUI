@@ -13,7 +13,7 @@ lazy_static! {
         let (tx, rx) = channel();
         (Arc::new(Mutex::new(tx)), Arc::new(Mutex::new(rx)))
     };
-};
+}
 
 #[allow(unused_variables)]
 #[allow(unused_must_use)]

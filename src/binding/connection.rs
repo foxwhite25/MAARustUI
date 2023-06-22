@@ -142,9 +142,9 @@ impl<'a> MAABuilder<'a> {
 
     fn connect_with_adb(&self, handle: AsstHandle) -> Result<i32> {
         let path = self.adb_path.clone().unwrap_or(find_it("adb").unwrap());
-        info!("Adb path: {}", path.display());
-        info!("Adb address: {}", self.adb_address);
-        info!("Adb config: {}", self.adb_config.unwrap_or("General"));
+        debug!("Adb path: {}", path.display());
+        debug!("Adb address: {}", self.adb_address);
+        debug!("Adb config: {}", self.adb_config.unwrap_or("General"));
         unsafe {
             let c_adb_path = CString::new(path.as_os_str().as_os_str_bytes())?;
             let c_address = CString::new(self.adb_address)?;
@@ -249,6 +249,7 @@ impl MAAConnection {
     async fn start_polling(&mut self) {
         let wakes = self.wakes.clone();
         tokio::spawn(async move {
+            info!("Polling started");
             loop {
                 let Some(resp) = Self::poll() else { break };
                 debug!("Received: {:?}", resp);
@@ -271,6 +272,33 @@ impl MAAConnection {
                 }
             }
         });
+    }
+
+    pub fn start(&self) {
+        unsafe {
+            AsstStart(self.handle);
+        }
+    }
+
+    pub fn stop(&self) {
+        unsafe {
+            AsstStop(self.handle);
+        }
+    }
+
+    pub fn is_running(&self) -> bool {
+        unsafe {
+            let ret = AsstRunning(self.handle);
+            matches!(ret, 1)
+        }
+    }
+}
+
+impl Drop for MAAConnection {
+    fn drop(&mut self) {
+        unsafe {
+            AsstDestroy(self.handle);
+        }
     }
 }
 

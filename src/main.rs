@@ -18,6 +18,6 @@ async fn main() {
         .await
         .unwrap();
 
-    info!("{}", m.get_version().unwrap());
+    info!("You are running MAA version: {}", m.get_version().unwrap());
     thread::sleep(std::time::Duration::from_secs(10));
 }

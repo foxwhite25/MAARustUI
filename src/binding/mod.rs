@@ -1,4 +1,5 @@
 mod bind;
 pub mod connection;
-pub mod event_handler;
 mod event;
+pub mod event_handler;
+pub mod options;

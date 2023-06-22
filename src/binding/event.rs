@@ -1,4 +1,5 @@
-use std::collections::HashSet;
+use log::{debug, error};
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 
 use serde_json::Value;
@@ -6,6 +7,7 @@ use serde_json::Value;
 use serde::Deserialize;
 use serde::Serialize;
 
+#[derive(Debug, Clone)]
 pub enum AsstMsg {
     // 内部错误
     InternalError = 0,
@@ -43,11 +45,11 @@ pub enum AsstMsg {
     SubTaskStopped = 20004,
 }
 
+#[derive(Debug)]
 pub struct Events {
     pub type_: AsstMsg,
     pub params: Value,
 }
-
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -61,18 +63,34 @@ pub struct AsyncCallInfo {
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct AsyncCallInfoDetails {
-    pub ret: bool,
+    pub ret: Value,
     pub cost: i32,
 }
 
-pub fn wake(wakes: &Arc<Mutex<HashSet<i32>>>, async_id: i32) {
-    let mut map = wakes.lock().unwrap();
-    map.insert(async_id);
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InitFailed {
+    pub what: String,
+    pub why: String,
+    pub details: Value,
 }
 
+pub fn wake(wakes: &Arc<Mutex<HashMap<i32, Value>>>, async_id: i32, ret: Value) {
+    let mut map = wakes.lock().unwrap();
+    map.insert(async_id, ret);
+}
 
-pub async fn handle_async_call_info(wakes: &Arc<Mutex<HashSet<i32>>>, params: Value) {
+pub async fn handle_init_failed(params: Value) {
+    let init_failed: InitFailed = serde_json::from_value(params).unwrap();
+    error!("init_failed: {:?}", init_failed);
+}
+
+pub async fn handle_async_call_info(wakes: &Arc<Mutex<HashMap<i32, Value>>>, params: Value) {
     let async_call_info: AsyncCallInfo = serde_json::from_value(params).unwrap();
-    wake(wakes, async_call_info.async_call_id);
-    println!("async_call_info: {:?}", async_call_info);
+    debug!("async_call_info: {:?}", async_call_info);
+    wake(
+        wakes,
+        async_call_info.async_call_id,
+        async_call_info.details.ret,
+    );
 }

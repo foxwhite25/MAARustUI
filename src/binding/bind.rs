@@ -42,10 +42,7 @@ extern "C" {
     pub fn AsstCreate() -> AsstHandle;
 }
 extern "C" {
-    pub fn AsstCreateEx(
-        callback: AsstApiCallback,
-        custom_arg: *mut c_void,
-    ) -> AsstHandle;
+    pub fn AsstCreateEx(callback: AsstApiCallback, custom_arg: *mut c_void) -> AsstHandle;
 }
 extern "C" {
     pub fn AsstDestroy(handle: AsstHandle);

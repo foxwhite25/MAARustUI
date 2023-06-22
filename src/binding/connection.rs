@@ -1,17 +1,19 @@
+use crate::binding::bind::*;
+use crate::binding::event_handler::{maa_callback, CALLBACK_CHANNEL};
+use anyhow::{anyhow, Result};
+use futures::Future;
 use std::collections::{HashMap, HashSet};
+use std::env;
 use std::ffi::{c_void, CStr, CString};
 use std::path::{Path, PathBuf};
-use crate::binding::bind::*;
-use anyhow::{anyhow, Result};
-use crate::binding::event_handler::{CALLBACK_CHANNEL, maa_callback};
-use std::env;
-use std::future::Future;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 
-use std::task::{Context, Poll};
-use log::{error, info};
-use crate::binding::event::{AsstMsg, Events, handle_async_call_info};
+use crate::binding::event::{handle_async_call_info, handle_init_failed, AsstMsg, Events};
+use crate::binding::options::MAAOption;
+use log::{debug, error, info};
+use serde_json::Value;
+use std::task::{Context, Poll, Waker};
 
 #[derive(Debug, Clone)]
 pub struct Task {
@@ -27,21 +29,24 @@ pub struct MAAConnection {
     target: String,
     tasks: HashMap<i32, Task>,
     id: i64,
-    pub wakes: Arc<Mutex<HashSet<i32>>>,
+    pub wakes: Arc<Mutex<HashMap<i32, Value>>>,
 }
 
 fn find_it<P>(exe_name: P) -> Option<PathBuf>
-    where P: AsRef<Path>,
+where
+    P: AsRef<Path>,
 {
     env::var_os("PATH").and_then(|paths| {
-        env::split_paths(&paths).filter_map(|dir| {
-            let full_path = dir.join(&exe_name);
-            if full_path.is_file() {
-                Some(full_path)
-            } else {
-                None
-            }
-        }).next()
+        env::split_paths(&paths)
+            .filter_map(|dir| {
+                let full_path = dir.join(&exe_name);
+                if full_path.is_file() {
+                    Some(full_path)
+                } else {
+                    None
+                }
+            })
+            .next()
     })
 }
 
@@ -53,6 +58,7 @@ pub struct MAABuilder<'a> {
     work_dir: Option<PathBuf>,
     callback: Option<AsstApiCallback>,
     adb_config: Option<&'a str>,
+    maa_settings: MAAOption,
 }
 
 impl<'a> MAABuilder<'a> {
@@ -65,6 +71,7 @@ impl<'a> MAABuilder<'a> {
             work_dir: None,
             callback: Some(Some(maa_callback)),
             adb_config: None,
+            maa_settings: MAAOption::default(),
         }
     }
 
@@ -93,6 +100,11 @@ impl<'a> MAABuilder<'a> {
         self
     }
 
+    pub fn with_maa_settings(mut self, settings: MAAOption) -> Self {
+        self.maa_settings = settings;
+        self
+    }
+
     fn load_resource<P: AsRef<Path>>(path: P) -> Result<()> {
         let path = path.as_ref().as_os_str().as_os_str_bytes();
         let ret = unsafe {
@@ -117,9 +129,7 @@ impl<'a> MAABuilder<'a> {
         }
     }
 
-    fn create_connection(
-        call_back: AsstApiCallback,
-    ) -> Result<(AsstHandle, i64)> {
+    fn create_connection(call_back: AsstApiCallback) -> Result<(AsstHandle, i64)> {
         let id = rand::random::<i64>();
 
         let handle = unsafe { AsstCreateEx(call_back, id as *mut c_void) };
@@ -130,10 +140,7 @@ impl<'a> MAABuilder<'a> {
         }
     }
 
-    fn connect_with_adb(
-        &self,
-        handle: AsstHandle,
-    ) -> Result<i32> {
+    fn connect_with_adb(&self, handle: AsstHandle) -> Result<i32> {
         let path = self.adb_path.clone().unwrap_or(find_it("adb").unwrap());
         info!("Adb path: {}", path.display());
         info!("Adb address: {}", self.adb_address);
@@ -158,16 +165,18 @@ impl<'a> MAABuilder<'a> {
     }
 
     pub async fn build(&self) -> Result<MAAConnection> {
+        if let Some(path) = &self.work_dir {
+            info!("Setting working directory to {}", path.display());
+            Self::set_working_directory(path)?;
+        }
+
         info!("Loading resources to {}", self.resources_path.display());
         Self::load_resource(&self.resources_path)?;
         if let Some(path) = &self.incremental_path {
             info!("Loading incremental resources to {}", path.display());
             Self::load_resource(path)?;
         }
-        if let Some(path) = &self.work_dir {
-            info!("Setting working directory to {}", path.display());
-            Self::set_working_directory(path)?;
-        }
+
         info!("Creating connection to {}", self.adb_address);
         let id = Self::create_connection(self.callback.unwrap())?;
         let handle = id.0;
@@ -178,15 +187,30 @@ impl<'a> MAABuilder<'a> {
             target: self.adb_address.to_string(),
             tasks: HashMap::new(),
             id,
-            wakes: Arc::new(Mutex::new(HashSet::new())),
+            wakes: Arc::new(Mutex::new(HashMap::new())),
         };
+        let settings = self.maa_settings.to_map();
+        for (k, v) in settings {
+            maa.set_option(k as AsstInstanceOptionKey, &v)?;
+        }
         maa.start_polling().await;
         let async_id = self.connect_with_adb(handle)?;
 
-        CallbackWatcher {
+        let k: Value = CallbackWatcher {
             id: async_id,
             wakes: maa.wakes.clone(),
-        }.await;
+        }
+        .await;
+        match k {
+            Value::Bool(b) => {
+                if b {
+                    info!("Connected to MAA");
+                } else {
+                    return Err(anyhow!("Failed to connect to MAA"));
+                }
+            }
+            _ => return Err(anyhow!("Unknown Return Value From Callback: {k}")),
+        }
 
         Ok(maa)
     }
@@ -227,14 +251,13 @@ impl MAAConnection {
         tokio::spawn(async move {
             loop {
                 let Some(resp) = Self::poll() else { break };
+                debug!("Received: {:?}", resp);
                 match resp.type_ {
                     AsstMsg::InternalError => {}
-                    AsstMsg::InitFailed => {}
+                    AsstMsg::InitFailed => handle_init_failed(resp.params).await,
                     AsstMsg::ConnectionInfo => {}
                     AsstMsg::AllTasksCompleted => {}
-                    AsstMsg::AsyncCallInfo => {
-                        handle_async_call_info(&wakes ,resp.params).await
-                    }
+                    AsstMsg::AsyncCallInfo => handle_async_call_info(&wakes, resp.params).await,
                     AsstMsg::TaskChainError => {}
                     AsstMsg::TaskChainStart => {}
                     AsstMsg::TaskChainCompleted => {}
@@ -253,18 +276,20 @@ impl MAAConnection {
 
 struct CallbackWatcher {
     id: i32,
-    wakes: Arc<Mutex<HashSet<i32>>>,
+    wakes: Arc<Mutex<HashMap<i32, Value>>>,
 }
 
 impl Future for CallbackWatcher {
-    type Output = ();
+    type Output = Value;
 
-    fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut wakes = self.wakes.lock().unwrap();
-        if wakes.contains(&self.id) {
+        if wakes.contains_key(&self.id) {
+            let value = wakes.get(&self.id).unwrap().clone();
             wakes.remove(&self.id);
-            Poll::Ready(())
+            Poll::Ready(value)
         } else {
+            cx.waker().wake_by_ref();
             Poll::Pending
         }
     }

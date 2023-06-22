@@ -1,7 +1,7 @@
-use log::{debug, error};
-use std::collections::{HashMap, HashSet};
-use std::sync::{Arc, Mutex};
+pub mod async_call_info;
+pub mod connection_info;
 
+use log::error;
 use serde_json::Value;
 
 use serde::Deserialize;
@@ -52,22 +52,6 @@ pub struct Events {
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub struct AsyncCallInfo {
-    pub uuid: String,
-    pub what: String,
-    pub async_call_id: i32,
-    pub details: AsyncCallInfoDetails,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub struct AsyncCallInfoDetails {
-    pub ret: Value,
-    pub cost: i32,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InitFailed {
     pub what: String,
@@ -75,22 +59,7 @@ pub struct InitFailed {
     pub details: Value,
 }
 
-pub fn wake(wakes: &Arc<Mutex<HashMap<i32, Value>>>, async_id: i32, ret: Value) {
-    let mut map = wakes.lock().unwrap();
-    map.insert(async_id, ret);
-}
-
 pub async fn handle_init_failed(params: Value) {
     let init_failed: InitFailed = serde_json::from_value(params).unwrap();
     error!("init_failed: {:?}", init_failed);
-}
-
-pub async fn handle_async_call_info(wakes: &Arc<Mutex<HashMap<i32, Value>>>, params: Value) {
-    let async_call_info: AsyncCallInfo = serde_json::from_value(params).unwrap();
-    debug!("async_call_info: {:?}", async_call_info);
-    wake(
-        wakes,
-        async_call_info.async_call_id,
-        async_call_info.details.ret,
-    );
 }

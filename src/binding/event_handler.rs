@@ -1,4 +1,4 @@
-use crate::binding::event::{AsstMsg, Events};
+use crate::binding::events::{AsstMsg, Events};
 use lazy_static::lazy_static;
 use serde_json::Value;
 use std::ffi::{c_char, c_int, c_void, CStr};

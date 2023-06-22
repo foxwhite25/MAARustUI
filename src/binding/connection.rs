@@ -9,11 +9,13 @@ use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 
-use crate::binding::event::{handle_async_call_info, handle_init_failed, AsstMsg, Events};
+use crate::binding::events::async_call_info::handle_async_call_info;
+use crate::binding::events::{handle_init_failed, AsstMsg, Events};
 use crate::binding::options::MAAOption;
 use log::{debug, error, info};
 use serde_json::Value;
 use std::task::{Context, Poll, Waker};
+use crate::binding::events::connection_info::handle_connection_info;
 
 #[derive(Debug, Clone)]
 pub struct Task {
@@ -25,7 +27,7 @@ pub struct Task {
 #[derive(Debug)]
 pub struct MAAConnection {
     handle: AsstHandle,
-    uuid: Option<String>,
+    uuid: Arc<Mutex<Option<String>>>,
     target: String,
     tasks: HashMap<i32, Task>,
     id: i64,
@@ -183,7 +185,7 @@ impl<'a> MAABuilder<'a> {
         let id = id.1;
         let mut maa = MAAConnection {
             handle,
-            uuid: None,
+            uuid: Arc::new(Mutex::new(None)),
             target: self.adb_address.to_string(),
             tasks: HashMap::new(),
             id,
@@ -248,6 +250,7 @@ impl MAAConnection {
 
     async fn start_polling(&mut self) {
         let wakes = self.wakes.clone();
+        let uuid = self.uuid.clone();
         tokio::spawn(async move {
             info!("Polling started");
             loop {
@@ -256,7 +259,7 @@ impl MAAConnection {
                 match resp.type_ {
                     AsstMsg::InternalError => {}
                     AsstMsg::InitFailed => handle_init_failed(resp.params).await,
-                    AsstMsg::ConnectionInfo => {}
+                    AsstMsg::ConnectionInfo => handle_connection_info(&uuid, resp.params).await,
                     AsstMsg::AllTasksCompleted => {}
                     AsstMsg::AsyncCallInfo => handle_async_call_info(&wakes, resp.params).await,
                     AsstMsg::TaskChainError => {}

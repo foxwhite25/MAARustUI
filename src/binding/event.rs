@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
-use log::error;
+
 use serde_json::Value;
-use crate::binding::connection::MAAConnection;
+
 use serde::Deserialize;
 use serde::Serialize;
 

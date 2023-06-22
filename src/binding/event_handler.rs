@@ -5,8 +5,12 @@ use std::sync::mpsc::{channel, Sender, Receiver};
 use serde_json::Value;
 use crate::binding::event::{AsstMsg, Events};
 
+type ArcMutexSender = Arc<Mutex<Sender<Events>>>;
+type ArcMutexReceiver = Arc<Mutex<Receiver<Events>>>;
+
+
 lazy_static!(
-    pub static ref CALLBACK_CHANNEL: (Arc<Mutex<Sender<Events>>>, Arc<Mutex<Receiver<Events>>>) = {
+    pub static ref CALLBACK_CHANNEL: (ArcMutexSender, ArcMutexReceiver) = {
         let (tx, rx) = channel();
         (Arc::new(Mutex::new(tx)), Arc::new(Mutex::new(rx)))
     };
@@ -14,6 +18,9 @@ lazy_static!(
 
 #[allow(unused_variables)]
 #[allow(unused_must_use)]
+/// # Safety
+///
+/// This function is a callback from the C library, and should not be called directly.
 pub unsafe extern "C" fn maa_callback(
     msg: c_int,
     detail_json: *const c_char,

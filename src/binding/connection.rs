@@ -1,5 +1,5 @@
 use std::collections::{HashMap, HashSet};
-use std::ffi::{c_void, CStr, CString, OsStr, OsString};
+use std::ffi::{c_void, CStr, CString};
 use std::path::{Path, PathBuf};
 use crate::binding::bind::*;
 use anyhow::{anyhow, Result};
@@ -9,7 +9,7 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 
-use std::task::{Context, Poll, Waker};
+use std::task::{Context, Poll};
 use log::{error, info};
 use crate::binding::event::{AsstMsg, Events, handle_async_call_info};
 
@@ -212,7 +212,7 @@ impl MAAConnection {
 
     fn poll() -> Option<Events> {
         let channel = CALLBACK_CHANNEL.1.clone();
-        let mut future = channel.lock().unwrap();
+        let future = channel.lock().unwrap();
         match future.recv() {
             Ok(res) => Some(res),
             Err(env) => {

@@ -1,7 +1,7 @@
 
 use std::{thread};
 use log::info;
-use RustUI::binding::connection::{MAABuilder};
+use maa_rust_ui::binding::connection::{MAABuilder};
 
 #[tokio::main]
 async fn main() {

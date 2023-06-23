@@ -26,27 +26,34 @@ pub type AsstApiCallback = Option<
         custom_arg: *mut ::std::os::raw::c_void,
     ),
 >;
+
 extern "C" {
     pub fn AsstSetUserDir(path: *const ::std::os::raw::c_char) -> AsstBool;
 }
+
 extern "C" {
     pub fn AsstLoadResource(path: *const ::std::os::raw::c_char) -> AsstBool;
 }
+
 extern "C" {
     pub fn AsstSetStaticOption(
         key: AsstStaticOptionKey,
         value: *const ::std::os::raw::c_char,
     ) -> AsstBool;
 }
+
 extern "C" {
     pub fn AsstCreate() -> AsstHandle;
 }
+
 extern "C" {
     pub fn AsstCreateEx(callback: AsstApiCallback, custom_arg: *mut c_void) -> AsstHandle;
 }
+
 extern "C" {
     pub fn AsstDestroy(handle: AsstHandle);
 }
+
 extern "C" {
     pub fn AsstSetInstanceOption(
         handle: AsstHandle,
@@ -54,6 +61,7 @@ extern "C" {
         value: *const ::std::os::raw::c_char,
     ) -> AsstBool;
 }
+
 extern "C" {
     pub fn AsstConnect(
         handle: AsstHandle,
@@ -62,6 +70,7 @@ extern "C" {
         config: *const ::std::os::raw::c_char,
     ) -> AsstBool;
 }
+
 extern "C" {
     pub fn AsstAppendTask(
         handle: AsstHandle,
@@ -69,6 +78,7 @@ extern "C" {
         params: *const ::std::os::raw::c_char,
     ) -> AsstTaskId;
 }
+
 extern "C" {
     pub fn AsstSetTaskParams(
         handle: AsstHandle,
@@ -76,15 +86,19 @@ extern "C" {
         params: *const ::std::os::raw::c_char,
     ) -> AsstBool;
 }
+
 extern "C" {
     pub fn AsstStart(handle: AsstHandle) -> AsstBool;
 }
+
 extern "C" {
     pub fn AsstStop(handle: AsstHandle) -> AsstBool;
 }
+
 extern "C" {
     pub fn AsstRunning(handle: AsstHandle) -> AsstBool;
 }
+
 extern "C" {
     pub fn AsstAsyncConnect(
         handle: AsstHandle,
@@ -94,12 +108,15 @@ extern "C" {
         block: AsstBool,
     ) -> AsstAsyncCallId;
 }
+
 extern "C" {
     pub fn AsstAsyncClick(handle: AsstHandle, x: i32, y: i32, block: AsstBool) -> AsstAsyncCallId;
 }
+
 extern "C" {
     pub fn AsstAsyncScreencap(handle: AsstHandle, block: AsstBool) -> AsstAsyncCallId;
 }
+
 extern "C" {
     pub fn AsstGetImage(
         handle: AsstHandle,
@@ -107,6 +124,7 @@ extern "C" {
         buff_size: AsstSize,
     ) -> AsstSize;
 }
+
 extern "C" {
     pub fn AsstGetUUID(
         handle: AsstHandle,
@@ -114,6 +132,7 @@ extern "C" {
         buff_size: AsstSize,
     ) -> AsstSize;
 }
+
 extern "C" {
     pub fn AsstGetTasksList(
         handle: AsstHandle,
@@ -121,12 +140,15 @@ extern "C" {
         buff_size: AsstSize,
     ) -> AsstSize;
 }
+
 extern "C" {
     pub fn AsstGetNullSize() -> AsstSize;
 }
+
 extern "C" {
     pub fn AsstGetVersion() -> *const ::std::os::raw::c_char;
 }
+
 extern "C" {
     pub fn AsstLog(level: *const ::std::os::raw::c_char, message: *const ::std::os::raw::c_char);
 }

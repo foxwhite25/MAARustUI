@@ -1,4 +1,5 @@
 use std::sync::{Arc, Mutex};
+
 use log::{debug, error, info, warn};
 use serde::Deserialize;
 use serde::Serialize;
@@ -16,7 +17,7 @@ enum ConnectionInfoWhat {
     ScreencapFailed,
     TouchModeNotAvailable,
     ResolutionGot,
-    Unknown
+    Unknown,
 }
 
 impl From<&str> for ConnectionInfoWhat {
@@ -36,14 +37,14 @@ impl From<&str> for ConnectionInfoWhat {
             _ => {
                 warn!("Unknown ConnectionInfoWhat: {:?}", s);
                 ConnectionInfoWhat::Unknown
-            },
+            }
         }
     }
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct ConnectionInfo {
+struct ConnectionInfo {
     pub what: String,
     pub why: Option<String>,
     pub uuid: String,
@@ -52,7 +53,7 @@ pub struct ConnectionInfo {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct ConnectionInfoDetails {
+struct ConnectionInfoDetails {
     pub adb: String,
     pub address: String,
     pub config: String,
@@ -97,7 +98,11 @@ pub async fn handle_connection_info(uuid: &Arc<Mutex<Option<String>>>, params: V
             error!("Touch Mode Not Available: {:?}", async_call_info.why)
         }
         ConnectionInfoWhat::ResolutionGot => {
-            info!("Device Resolution: {}x{}", async_call_info.details.width.unwrap(), async_call_info.details.height.unwrap())
+            info!(
+                "Device Resolution: {}x{}",
+                async_call_info.details.width.unwrap(),
+                async_call_info.details.height.unwrap()
+            )
         }
         ConnectionInfoWhat::Unknown => {
             warn!("Unknown ConnectionInfoWhat: {}", async_call_info.what)

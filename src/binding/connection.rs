@@ -1,21 +1,20 @@
-use crate::binding::bind::*;
-use crate::binding::event_handler::{maa_callback, CALLBACK_CHANNEL};
-use anyhow::{anyhow, Result};
-use futures::Future;
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::ffi::{c_void, CStr, CString};
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
+use std::task::{Context, Poll, Waker};
 
-use crate::binding::events::async_call_info::handle_async_call_info;
-use crate::binding::events::{handle_init_failed, AsstMsg, Events};
-use crate::binding::options::MAAOption;
+use anyhow::{anyhow, Result};
+use futures::Future;
 use log::{debug, error, info};
 use serde_json::Value;
-use std::task::{Context, Poll, Waker};
-use crate::binding::events::connection_info::handle_connection_info;
+
+use crate::binding::bind::*;
+use crate::binding::event_handler::{maa_callback, CALLBACK_CHANNEL};
+use crate::binding::events::*;
+use crate::binding::options::MAAOption;
 
 #[derive(Debug, Clone)]
 pub struct Task {
@@ -254,7 +253,7 @@ impl MAAConnection {
         tokio::spawn(async move {
             info!("Polling started");
             loop {
-                let Some(resp) = Self::poll() else { break };
+                let Some(resp) = Self::poll() else { break; };
                 debug!("Received: {:?}", resp);
                 match resp.type_ {
                     AsstMsg::InternalError => {}

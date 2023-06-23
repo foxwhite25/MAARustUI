@@ -1,9 +1,11 @@
-use crate::binding::events::{AsstMsg, Events};
-use lazy_static::lazy_static;
-use serde_json::Value;
 use std::ffi::{c_char, c_int, c_void, CStr};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex};
+
+use lazy_static::lazy_static;
+use serde_json::Value;
+
+use crate::binding::events::{AsstMsg, Events};
 
 type ArcMutexSender = Arc<Mutex<Sender<Events>>>;
 type ArcMutexReceiver = Arc<Mutex<Receiver<Events>>>;

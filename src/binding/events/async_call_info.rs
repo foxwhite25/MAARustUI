@@ -1,13 +1,14 @@
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+
 use log::debug;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct AsyncCallInfo {
+struct AsyncCallInfo {
     pub uuid: String,
     pub what: String,
     pub async_call_id: i32,
@@ -16,7 +17,7 @@ pub struct AsyncCallInfo {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct AsyncCallInfoDetails {
+struct AsyncCallInfoDetails {
     pub ret: Value,
     pub cost: i32,
 }

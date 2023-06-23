@@ -1,4 +1,4 @@
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::env;
 use std::ffi::{c_void, CStr, CString};
 use std::path::{Path, PathBuf};
@@ -13,7 +13,7 @@ use serde_json::Value;
 use tokio::sync::Mutex;
 
 use crate::binding::bind::*;
-use crate::binding::event_handler::{CALLBACK_CHANNEL, maa_callback};
+use crate::binding::event_handler::{maa_callback, CALLBACK_CHANNEL};
 use crate::binding::events::*;
 use crate::binding::options::MAAOption;
 use crate::binding::resources::ItemMap;
@@ -31,8 +31,8 @@ pub struct MAAConnection {
 }
 
 fn find_it<P>(exe_name: P) -> Option<PathBuf>
-    where
-        P: AsRef<Path>,
+where
+    P: AsRef<Path>,
 {
     env::var_os("PATH").and_then(|paths| {
         env::split_paths(&paths)
@@ -208,7 +208,7 @@ impl<'a> MAABuilder<'a> {
             id: async_id,
             wakes: maa.wakes.clone(),
         }
-            .await;
+        .await;
         match k {
             Value::Bool(b) => {
                 if b {

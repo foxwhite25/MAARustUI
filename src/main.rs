@@ -39,6 +39,14 @@ async fn main() {
         .append_in(&mut m)
         .unwrap();
 
+    Mall::new_paused()
+        .set_shopping(true)
+        .set_buy_first(vec![ShopItem::LMD, ShopItem::RecruitmentPermit])
+        .set_blacklist(vec![ShopItem::FurniturePart, ShopItem::FurniturePart])
+        .set_force_shopping_if_credit_full(true)
+        .append_in(&mut m)
+        .unwrap();
+
     m.start().unwrap();
 
     info!("You are running MAA version: {}", m.get_version().unwrap());

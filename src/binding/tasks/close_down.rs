@@ -21,6 +21,12 @@ impl<T: State> CloseDown<T> {
     }
 }
 
+impl CloseDown<Paused> {
+    pub fn new_paused() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> StoppedTask<'a> for CloseDown<Paused> {
     fn name(&self) -> &'static str {
         "CloseDown"

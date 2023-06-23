@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum InstanceOptionKey {
     TouchMode = 2,

@@ -46,8 +46,8 @@ impl<T: State> Recruit<T> {
         Recruit {
             _phantom: PhantomData,
             refresh: false,
-            select: vec![3, 4, 5],
-            confirm: vec![3, 5, 4, 6],
+            select: vec![4],
+            confirm: vec![3, 4],
             times: 0,
             set_time: true,
             expedite: false,
@@ -73,13 +73,13 @@ impl<T: State> Recruit<T> {
         self
     }
 
-    /// 会去点击标签的 Tag 等级, 可选，默认 `[3,4,5]`。若仅公招计算，可设置为空数组
+    /// 会去点击标签的 Tag 等级, 可选，默认 `[4]`。若仅公招计算，可设置为空数组
     pub fn select(mut self, select: Vec<usize>) -> Self {
         self.select = select;
         self
     }
 
-    /// 会去点击确认的 Tag 等级, 可选，默认 `[3,5,4,6]`
+    /// 会去点击确认的 Tag 等级, 可选，默认 `[3,4]`
     pub fn confirm(mut self, confirm: Vec<usize>) -> Self {
         self.confirm = confirm;
         self
@@ -139,6 +139,12 @@ impl<T: State> Recruit<T> {
     pub fn server(mut self, server: Server) -> Self {
         self.server = server.as_ref().to_string();
         self
+    }
+}
+
+impl Recruit<Paused> {
+    pub fn new_paused() -> Self {
+        Self::new()
     }
 }
 

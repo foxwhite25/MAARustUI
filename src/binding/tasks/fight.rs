@@ -146,6 +146,10 @@ impl Fight<Paused> {
         self.stage = stage.to_string();
         self
     }
+
+    pub fn new_paused() -> Self {
+        Self::new()
+    }
 }
 
 impl<'a> StoppedTask<'a> for Fight<Paused> {

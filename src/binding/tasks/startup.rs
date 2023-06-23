@@ -38,6 +38,12 @@ impl<T: State> StartUp<T> {
     }
 }
 
+impl StartUp<Paused> {
+    pub fn new_paused() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> StoppedTask<'a> for StartUp<Paused> {
     fn name(&self) -> &'static str {
         "StartUp"

@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 pub use close_down::*;
 pub use fight::*;
+pub use mall::*;
 pub use recruit::*;
 pub use startup::*;
 
@@ -10,6 +11,7 @@ use crate::binding::connection::MAAConnection;
 
 mod close_down;
 mod fight;
+mod mall;
 mod recruit;
 mod startup;
 

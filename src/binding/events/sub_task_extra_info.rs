@@ -59,7 +59,7 @@ struct Stat {
 
 pub async fn handle_sub_task_extra_info(params: Value) {
     let async_call_info: SubTaskExtraInfo = serde_json::from_value(params).unwrap();
-    match async_call_info.what.as_str() {
+    match async_call_info.class.as_str() {
         "asst::StageDropsTaskPlugin" => {
             info!(
                 "Finished battle with {} star at stage {}",

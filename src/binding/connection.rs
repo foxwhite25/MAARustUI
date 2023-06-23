@@ -25,7 +25,7 @@ pub struct MAAConnection {
     uuid: Arc<Mutex<Option<String>>>,
     target: String,
     id: i64,
-    pub wakes: Arc<Mutex<HashMap<i32, Value>>>,
+    pub wakes: Arc<std::sync::Mutex<HashMap<i32, Value>>>,
     finished: Arc<Mutex<bool>>,
     item_map: ItemMap,
 }
@@ -171,7 +171,7 @@ impl<'a> MAABuilder<'a> {
         info!("Loading resources to {}", self.resources_path.display());
         Self::load_resource(&self.resources_path)?;
 
-        let item_map = self.resources_path.join("item_index.json");
+        let item_map = self.resources_path.join("resource").join("item_index.json");
         if !item_map.is_file() {
             error!("Item index not found");
             return Err(anyhow!("Item index not found"));
@@ -193,7 +193,7 @@ impl<'a> MAABuilder<'a> {
             uuid: Arc::new(Mutex::new(None)),
             target: self.adb_address.to_string(),
             id,
-            wakes: Arc::new(Mutex::new(HashMap::new())),
+            wakes: Arc::new(std::sync::Mutex::new(HashMap::new())),
             finished: Arc::new(Mutex::new(false)),
             item_map,
         };
@@ -346,14 +346,14 @@ impl Drop for MAAConnection {
 
 struct CallbackWatcher {
     id: i32,
-    wakes: Arc<Mutex<HashMap<i32, Value>>>,
+    wakes: Arc<std::sync::Mutex<HashMap<i32, Value>>>,
 }
 
 impl Future for CallbackWatcher {
     type Output = Value;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let mut wakes = self.wakes.blocking_lock();
+        let mut wakes = self.wakes.lock().unwrap();
         if wakes.contains_key(&self.id) {
             let value = wakes.get(&self.id).unwrap().clone();
             wakes.remove(&self.id);

@@ -1,4 +1,4 @@
-use log::debug;
+use log::{debug, trace};
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
@@ -29,5 +29,5 @@ struct SubTaskStartDetails {
 
 pub async fn handle_sub_task_start(params: Value) {
     let async_call_info: SubTaskStart = serde_json::from_value(params).unwrap();
-    debug!("sub_task_start: {:?}", async_call_info);
+    trace!("sub_task_start: {:?}", async_call_info);
 }

@@ -7,11 +7,17 @@ pub use async_call_info::*;
 pub use connection_info::*;
 pub use sub_task_extra_info::*;
 pub use sub_task_start::*;
+pub use task_chain_start::*;
+pub use task_chain_completed::*;
+pub use task_chain_error::*;
 
 mod async_call_info;
 mod connection_info;
 mod sub_task_extra_info;
 mod sub_task_start;
+mod task_chain_start;
+mod task_chain_completed;
+mod task_chain_error;
 
 #[derive(Debug, Clone)]
 pub enum AsstMsg {

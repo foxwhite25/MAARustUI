@@ -6,10 +6,12 @@ use maa_rust_ui::binding::connection::MAABuilder;
 use maa_rust_ui::binding::options::{MAAOption, TouchMode};
 use maa_rust_ui::binding::tasks::*;
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[tokio::main]
 async fn main() {
     env_logger::builder()
-        .filter_level(log::LevelFilter::Trace)
+        .filter_level(log::LevelFilter::Debug)
         .init();
     let setting = MAAOption::default().with_touch_mode(TouchMode::MAATouch);
 
@@ -27,6 +29,7 @@ async fn main() {
         .unwrap();
 
     Fight::new()
+        .use_medicine(1)
         .server(Server::US)
         .client_type(ClientType::YoStarEN)
         .append_in(&mut m)
@@ -47,11 +50,13 @@ async fn main() {
         .append_in(&mut m)
         .unwrap();
 
+    info!("You are running MAA version: {}; MAARustUI: v{}, enjoy!", m.get_version().unwrap(), VERSION);
+
     m.start().unwrap();
 
-    info!("You are running MAA version: {}", m.get_version().unwrap());
     while m.is_running() {
         thread::sleep(std::time::Duration::from_secs(1));
     }
     info!("MAA have stopped");
+    std::process::exit(0);
 }

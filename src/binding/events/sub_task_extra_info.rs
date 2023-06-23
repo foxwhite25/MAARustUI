@@ -1,4 +1,4 @@
-use log::{debug, info};
+use log::{debug, info, trace};
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
@@ -62,22 +62,22 @@ pub async fn handle_sub_task_extra_info(params: Value) {
     match async_call_info.class.as_str() {
         "asst::StageDropsTaskPlugin" => {
             info!(
-                "Finished battle with {} star at stage {}",
+                "Finished battle with {} star at stage {}...",
                 async_call_info.details.stars.unwrap(),
                 async_call_info.details.stage.as_ref().unwrap().stage_code
             );
             info!("Dropped items:");
             for drop in async_call_info.details.drops.unwrap() {
-                info!("{}x{}", drop.item_name, drop.quantity);
+                info!("{} x {}", drop.item_name, drop.quantity);
             }
-
+            info!("");
             info!("Total items:");
             for stat in async_call_info.details.stats {
-                info!("{}x{}", stat.item_name, stat.quantity);
+                info!("{} x {}", stat.item_name, stat.quantity);
             }
         }
         _ => {
-            debug!("sub_task_extra_info: {:?}", async_call_info)
+            trace!("sub_task_extra_info: {:?}", async_call_info)
         }
     }
 }

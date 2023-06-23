@@ -272,9 +272,9 @@ impl MAAConnection {
                     AsstMsg::ConnectionInfo => handle_connection_info(&uuid, resp.params).await,
                     AsstMsg::AllTasksCompleted => trace!("Received: {:?}", resp),
                     AsstMsg::AsyncCallInfo => handle_async_call_info(&wakes, resp.params).await,
-                    AsstMsg::TaskChainError => trace!("Received: {:?}", resp),
-                    AsstMsg::TaskChainStart => trace!("Received: {:?}", resp),
-                    AsstMsg::TaskChainCompleted => trace!("Received: {:?}", resp),
+                    AsstMsg::TaskChainError => handle_task_chain_error(resp.params).await,
+                    AsstMsg::TaskChainStart => handle_task_chain_start(resp.params).await,
+                    AsstMsg::TaskChainCompleted => handle_task_chain_completed(resp.params).await,
                     AsstMsg::TaskChainExtraInfo => trace!("Received: {:?}", resp),
                     AsstMsg::TaskChainStopped => trace!("Received: {:?}", resp),
                     AsstMsg::SubTaskError => trace!("Received: {:?}", resp),
@@ -318,10 +318,6 @@ impl MAAConnection {
     }
 
     pub async fn destroy(self) {
-        self._destroy();
-    }
-
-    async fn _destroy(&self) {
         let mut finish = self.finished.lock().await;
         *finish = true;
         let channel = CALLBACK_CHANNEL.0.clone();

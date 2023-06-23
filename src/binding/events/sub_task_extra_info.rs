@@ -67,7 +67,7 @@ pub async fn handle_sub_task_extra_info(params: Value) {
                 async_call_info.details.stage.as_ref().unwrap().stage_code
             );
             info!("Dropped items:");
-            for drop in async_call_info.details.drops.as_ref().unwrap() {
+            for drop in async_call_info.details.drops.unwrap() {
                 info!("{}x{}", drop.item_name, drop.quantity);
             }
 

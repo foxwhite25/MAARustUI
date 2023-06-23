@@ -2,10 +2,12 @@ use serde::{Deserialize, Serialize};
 
 pub use close_down::*;
 pub use fight::*;
+pub use recruit::*;
 pub use startup::*;
 
 mod close_down;
 mod fight;
+mod recruit;
 mod startup;
 
 pub trait StoppedTask<'a>: Deserialize<'a> + Serialize {

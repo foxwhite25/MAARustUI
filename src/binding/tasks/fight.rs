@@ -107,14 +107,9 @@ impl<T: State> Fight<T> {
         self
     }
 
-    /// 设定是否上报到企鹅物流，可选，默认 false
-    pub fn report_to_penguin(mut self, report_to_penguin: bool) -> Self {
-        self.report_to_penguin = report_to_penguin;
-        self
-    }
-
-    /// 设定企鹅物流 ID，可选，默认为空。仅在 report_to_penguin 为 true 时有效
-    pub fn penguin_id(mut self, penguin_id: String) -> Self {
+    /// 上报到企鹅物流，设定设定企鹅物流 ID，可选，默认 false
+    pub fn report_to_penguin(mut self, penguin_id: String) -> Self {
+        self.report_to_penguin = true;
         self.penguin_id = penguin_id;
         self
     }

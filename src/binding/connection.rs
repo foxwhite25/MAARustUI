@@ -3,18 +3,20 @@ use std::env;
 use std::ffi::{c_void, CStr, CString};
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::task::{Context, Poll, Waker};
 
 use anyhow::{anyhow, Result};
 use futures::Future;
-use log::{debug, error, info};
+use log::{debug, error, info, trace};
 use serde_json::Value;
+use tokio::sync::Mutex;
 
 use crate::binding::bind::*;
 use crate::binding::event_handler::{maa_callback, CALLBACK_CHANNEL};
 use crate::binding::events::*;
 use crate::binding::options::MAAOption;
+use crate::binding::resources::ItemMap;
 use crate::binding::tasks::StoppedTask;
 
 #[derive(Debug)]
@@ -24,6 +26,8 @@ pub struct MAAConnection {
     target: String,
     id: i64,
     pub wakes: Arc<Mutex<HashMap<i32, Value>>>,
+    finished: Arc<Mutex<bool>>,
+    item_map: ItemMap
 }
 
 fn find_it<P>(exe_name: P) -> Option<PathBuf>
@@ -166,6 +170,15 @@ impl<'a> MAABuilder<'a> {
 
         info!("Loading resources to {}", self.resources_path.display());
         Self::load_resource(&self.resources_path)?;
+
+        let item_map = self.resources_path.join("item_index.json");
+        if !item_map.is_file() {
+            error!("Item index not found");
+            return Err(anyhow!("Item index not found"));
+        }
+        let item_map = std::fs::read_to_string(item_map)?;
+        let item_map: ItemMap = serde_json::from_str(&item_map)?;
+
         if let Some(path) = &self.incremental_path {
             info!("Loading incremental resources to {}", path.display());
             Self::load_resource(path)?;
@@ -181,6 +194,8 @@ impl<'a> MAABuilder<'a> {
             target: self.adb_address.to_string(),
             id,
             wakes: Arc::new(Mutex::new(HashMap::new())),
+            finished: Arc::new(Mutex::new(false)),
+            item_map
         };
         let settings = self.maa_settings.to_map();
         for (k, v) in settings {
@@ -242,27 +257,31 @@ impl MAAConnection {
     async fn start_polling(&mut self) {
         let wakes = self.wakes.clone();
         let uuid = self.uuid.clone();
+        let finish = self.finished.clone();
         tokio::spawn(async move {
             info!("Polling started");
             loop {
                 let Some(resp) = Self::poll() else { break; };
-                debug!("Received: {:?}", resp);
+                let finished = finish.lock().await;
+                if *finished {
+                    break;
+                }
                 match resp.type_ {
-                    AsstMsg::InternalError => {}
+                    AsstMsg::InternalError => trace!("Received: {:?}", resp),
                     AsstMsg::InitFailed => handle_init_failed(resp.params).await,
                     AsstMsg::ConnectionInfo => handle_connection_info(&uuid, resp.params).await,
-                    AsstMsg::AllTasksCompleted => {}
+                    AsstMsg::AllTasksCompleted => trace!("Received: {:?}", resp),
                     AsstMsg::AsyncCallInfo => handle_async_call_info(&wakes, resp.params).await,
-                    AsstMsg::TaskChainError => {}
-                    AsstMsg::TaskChainStart => {}
-                    AsstMsg::TaskChainCompleted => {}
-                    AsstMsg::TaskChainExtraInfo => {}
-                    AsstMsg::TaskChainStopped => {}
-                    AsstMsg::SubTaskError => {}
-                    AsstMsg::SubTaskStart => {}
-                    AsstMsg::SubTaskCompleted => {}
-                    AsstMsg::SubTaskExtraInfo => {}
-                    AsstMsg::SubTaskStopped => {}
+                    AsstMsg::TaskChainError => trace!("Received: {:?}", resp),
+                    AsstMsg::TaskChainStart => trace!("Received: {:?}", resp),
+                    AsstMsg::TaskChainCompleted => trace!("Received: {:?}", resp),
+                    AsstMsg::TaskChainExtraInfo => trace!("Received: {:?}", resp),
+                    AsstMsg::TaskChainStopped => trace!("Received: {:?}", resp),
+                    AsstMsg::SubTaskError => trace!("Received: {:?}", resp),
+                    AsstMsg::SubTaskStart => handle_sub_task_start(resp.params).await,
+                    AsstMsg::SubTaskCompleted => trace!("Received: {:?}", resp),
+                    AsstMsg::SubTaskExtraInfo => handle_sub_task_extra_info(resp.params).await,
+                    AsstMsg::SubTaskStopped => trace!("Received: {:?}", resp),
                 }
             }
         });
@@ -299,13 +318,29 @@ impl MAAConnection {
             matches!(ret, 1)
         }
     }
+
+    pub fn destroy(self) {
+        self._destroy();
+    }
+
+    fn _destroy(&self) {
+        let mut finish = self.finished.blocking_lock();
+        *finish = true;
+        let channel = CALLBACK_CHANNEL.0.clone();
+        let future = channel.lock().unwrap();
+        future.send(Events {
+            type_: AsstMsg::InternalError,
+            params: Default::default(),
+        }).expect("Failed to send destroy event");
+        unsafe {
+            AsstDestroy(self.handle);
+        }
+    }
 }
 
 impl Drop for MAAConnection {
     fn drop(&mut self) {
-        unsafe {
-            AsstDestroy(self.handle);
-        }
+        self._destroy()
     }
 }
 
@@ -318,7 +353,7 @@ impl Future for CallbackWatcher {
     type Output = Value;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let mut wakes = self.wakes.lock().unwrap();
+        let mut wakes = self.wakes.blocking_lock();
         if wakes.contains_key(&self.id) {
             let value = wakes.get(&self.id).unwrap().clone();
             wakes.remove(&self.id);

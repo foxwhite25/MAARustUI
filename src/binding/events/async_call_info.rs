@@ -1,10 +1,11 @@
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use log::debug;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
+use tokio::sync::Mutex;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -22,8 +23,8 @@ struct AsyncCallInfoDetails {
     pub cost: i32,
 }
 
-fn wake(wakes: &Arc<Mutex<HashMap<i32, Value>>>, async_id: i32, ret: Value) {
-    let mut map = wakes.lock().unwrap();
+async fn wake(wakes: &Arc<Mutex<HashMap<i32, Value>>>, async_id: i32, ret: Value) {
+    let mut map = wakes.lock().await;
     map.insert(async_id, ret);
 }
 
@@ -34,5 +35,5 @@ pub async fn handle_async_call_info(wakes: &Arc<Mutex<HashMap<i32, Value>>>, par
         wakes,
         async_call_info.async_call_id,
         async_call_info.details.ret,
-    );
+    ).await;
 }

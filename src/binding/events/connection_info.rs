@@ -1,9 +1,10 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use log::{debug, error, info, warn};
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
+use tokio::sync::Mutex;
 
 enum ConnectionInfoWhat {
     ConnectFailed,
@@ -72,7 +73,7 @@ pub async fn handle_connection_info(uuid: &Arc<Mutex<Option<String>>>, params: V
             debug!("Connected: {:?}", async_call_info.why)
         }
         ConnectionInfoWhat::UuidGot => {
-            let mut uuid = uuid.lock().unwrap();
+            let mut uuid = uuid.lock().await;
             debug!("Got UUID: {}", async_call_info.uuid);
             *uuid = Some(async_call_info.uuid);
         }

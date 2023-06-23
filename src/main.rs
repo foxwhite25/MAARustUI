@@ -7,7 +7,7 @@ use maa_rust_ui::binding::tasks::{ClientType, Fight, Server, StartUp};
 #[tokio::main]
 async fn main() {
     env_logger::builder()
-        .filter_level(log::LevelFilter::Debug)
+        .filter_level(log::LevelFilter::Trace)
         .init();
     let setting = MAAOption::default().with_touch_mode(TouchMode::MAATouch);
 

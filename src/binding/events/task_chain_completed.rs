@@ -13,5 +13,8 @@ struct TaskChainCompleted {
 
 pub async fn handle_task_chain_completed(params: Value) {
     let async_call_info: TaskChainCompleted = serde_json::from_value(params).unwrap();
-    info!("Task {}({}) Finished", async_call_info.taskid, async_call_info.taskchain);
+    info!(
+        "Task {}({}) Finished",
+        async_call_info.taskid, async_call_info.taskchain
+    );
 }

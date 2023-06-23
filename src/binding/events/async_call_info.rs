@@ -27,7 +27,10 @@ fn wake(wakes: &Arc<std::sync::Mutex<HashMap<i32, Value>>>, async_id: i32, ret: 
     map.insert(async_id, ret);
 }
 
-pub async fn handle_async_call_info(wakes: &Arc<std::sync::Mutex<HashMap<i32, Value>>>, params: Value) {
+pub async fn handle_async_call_info(
+    wakes: &Arc<std::sync::Mutex<HashMap<i32, Value>>>,
+    params: Value,
+) {
     let async_call_info: AsyncCallInfo = serde_json::from_value(params).unwrap();
     debug!("async_call_info: {:?}", async_call_info);
     wake(

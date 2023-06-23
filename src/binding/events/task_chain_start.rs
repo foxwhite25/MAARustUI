@@ -13,5 +13,8 @@ struct TaskChainStart {
 
 pub async fn handle_task_chain_start(params: Value) {
     let async_call_info: TaskChainStart = serde_json::from_value(params).unwrap();
-    info!("Start Task {}: {}", async_call_info.taskid, async_call_info.taskchain);
+    info!(
+        "Start Task {}: {}",
+        async_call_info.taskid, async_call_info.taskchain
+    );
 }

@@ -50,7 +50,11 @@ async fn main() {
         .append_in(&mut m)
         .unwrap();
 
-    info!("You are running MAA version: {}; MAARustUI: v{}, enjoy!", m.get_version().unwrap(), VERSION);
+    info!(
+        "You are running MAA version: {}; MAARustUI: v{}, enjoy!",
+        m.get_version().unwrap(),
+        VERSION
+    );
 
     m.start().unwrap();
 

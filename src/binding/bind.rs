@@ -21,11 +21,7 @@ pub type AsstAsyncCallId = i32;
 pub type AsstStaticOptionKey = i32;
 pub type AsstInstanceOptionKey = i32;
 pub type AsstApiCallback = Option<
-    unsafe extern "C" fn(
-        msg: AsstMsgId,
-        detail_json: *const c_char,
-        custom_arg: *mut c_void,
-    ),
+    unsafe extern "C" fn(msg: AsstMsgId, detail_json: *const c_char, custom_arg: *mut c_void),
 >;
 
 extern "C" {
@@ -37,10 +33,7 @@ extern "C" {
 }
 
 extern "C" {
-    pub fn AsstSetStaticOption(
-        key: AsstStaticOptionKey,
-        value: *const c_char,
-    ) -> AsstBool;
+    pub fn AsstSetStaticOption(key: AsstStaticOptionKey, value: *const c_char) -> AsstBool;
 }
 
 extern "C" {
@@ -81,11 +74,8 @@ extern "C" {
 }
 
 extern "C" {
-    pub fn AsstSetTaskParams(
-        handle: AsstHandle,
-        id: AsstTaskId,
-        params: *const c_char,
-    ) -> AsstBool;
+    pub fn AsstSetTaskParams(handle: AsstHandle, id: AsstTaskId, params: *const c_char)
+        -> AsstBool;
 }
 
 extern "C" {
@@ -119,19 +109,11 @@ extern "C" {
 }
 
 extern "C" {
-    pub fn AsstGetImage(
-        handle: AsstHandle,
-        buff: *mut c_void,
-        buff_size: AsstSize,
-    ) -> AsstSize;
+    pub fn AsstGetImage(handle: AsstHandle, buff: *mut c_void, buff_size: AsstSize) -> AsstSize;
 }
 
 extern "C" {
-    pub fn AsstGetUUID(
-        handle: AsstHandle,
-        buff: *mut c_char,
-        buff_size: AsstSize,
-    ) -> AsstSize;
+    pub fn AsstGetUUID(handle: AsstHandle, buff: *mut c_char, buff_size: AsstSize) -> AsstSize;
 }
 
 extern "C" {

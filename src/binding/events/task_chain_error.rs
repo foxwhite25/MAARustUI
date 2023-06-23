@@ -1,4 +1,4 @@
-use log::{error, info};
+use log::error;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
@@ -13,5 +13,8 @@ struct TaskChainError {
 
 pub async fn handle_task_chain_error(params: Value) {
     let async_call_info: TaskChainError = serde_json::from_value(params).unwrap();
-    error!("Task {} Errored: {}", async_call_info.taskid, async_call_info.taskchain);
+    error!(
+        "Task {} Errored: {}",
+        async_call_info.taskid, async_call_info.taskchain
+    );
 }

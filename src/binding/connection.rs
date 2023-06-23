@@ -317,12 +317,12 @@ impl MAAConnection {
         }
     }
 
-    pub fn destroy(self) {
+    pub async fn destroy(self) {
         self._destroy();
     }
 
-    fn _destroy(&self) {
-        let mut finish = self.finished.blocking_lock();
+    async fn _destroy(&self) {
+        let mut finish = self.finished.lock().await;
         *finish = true;
         let channel = CALLBACK_CHANNEL.0.clone();
         let future = channel.lock().unwrap();
@@ -340,7 +340,9 @@ impl MAAConnection {
 
 impl Drop for MAAConnection {
     fn drop(&mut self) {
-        self._destroy()
+        unsafe {
+            AsstDestroy(self.handle);
+        }
     }
 }
 

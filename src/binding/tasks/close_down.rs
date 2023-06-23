@@ -1,7 +1,9 @@
 use std::marker::PhantomData;
-use crate::binding::tasks::{Paused, State, StoppedTask};
+
 use serde::Deserialize;
 use serde::Serialize;
+
+use crate::binding::tasks::{Paused, State, StoppedTask};
 
 /// 开始唤醒
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]

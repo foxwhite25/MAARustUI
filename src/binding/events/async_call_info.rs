@@ -35,5 +35,6 @@ pub async fn handle_async_call_info(wakes: &Arc<Mutex<HashMap<i32, Value>>>, par
         wakes,
         async_call_info.async_call_id,
         async_call_info.details.ret,
-    ).await;
+    )
+    .await;
 }

@@ -2,7 +2,6 @@ use log::{debug, info};
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
-use crate::binding::resources::ItemMap;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -69,20 +68,12 @@ pub async fn handle_sub_task_extra_info(params: Value) {
             );
             info!("Dropped items:");
             for drop in async_call_info.details.drops.as_ref().unwrap() {
-                info!(
-                    "{}x{}",
-                    drop.item_name,
-                    drop.quantity
-                );
+                info!("{}x{}", drop.item_name, drop.quantity);
             }
 
             info!("Total items:");
             for stat in async_call_info.details.stats {
-                info!(
-                    "{}x{}",
-                    stat.item_name,
-                    stat.quantity
-                );
+                info!("{}x{}", stat.item_name, stat.quantity);
             }
         }
         _ => {

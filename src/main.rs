@@ -1,7 +1,9 @@
+use std::thread;
+
 use log::info;
+
 use maa_rust_ui::binding::connection::MAABuilder;
 use maa_rust_ui::binding::options::{MAAOption, TouchMode};
-use std::thread;
 use maa_rust_ui::binding::tasks::{ClientType, Fight, Server, StartUp};
 
 #[tokio::main]
@@ -19,8 +21,14 @@ async fn main() {
         .await
         .unwrap();
 
-    m.append_task(StartUp::new().set_client_type(ClientType::YoStarEN)).unwrap();
-    m.append_task(Fight::new().server(Server::US).client_type(ClientType::YoStarEN)).unwrap();
+    m.append_task(StartUp::new().set_client_type(ClientType::YoStarEN))
+        .unwrap();
+    m.append_task(
+        Fight::new()
+            .server(Server::US)
+            .client_type(ClientType::YoStarEN),
+    )
+    .unwrap();
 
     m.start().unwrap();
 

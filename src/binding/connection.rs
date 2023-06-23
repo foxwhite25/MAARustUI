@@ -27,7 +27,7 @@ pub struct MAAConnection {
     id: i64,
     pub wakes: Arc<Mutex<HashMap<i32, Value>>>,
     finished: Arc<Mutex<bool>>,
-    item_map: ItemMap
+    item_map: ItemMap,
 }
 
 fn find_it<P>(exe_name: P) -> Option<PathBuf>
@@ -195,7 +195,7 @@ impl<'a> MAABuilder<'a> {
             id,
             wakes: Arc::new(Mutex::new(HashMap::new())),
             finished: Arc::new(Mutex::new(false)),
-            item_map
+            item_map,
         };
         let settings = self.maa_settings.to_map();
         for (k, v) in settings {
@@ -297,9 +297,7 @@ impl MAAConnection {
 
     pub fn start(&self) -> Result<()> {
         info!("Starting MAA");
-        let ret = unsafe {
-            AsstStart(self.handle)
-        };
+        let ret = unsafe { AsstStart(self.handle) };
         match ret {
             1 => Ok(()),
             _ => Err(anyhow!("Unknown Error: {ret}")),
@@ -328,10 +326,12 @@ impl MAAConnection {
         *finish = true;
         let channel = CALLBACK_CHANNEL.0.clone();
         let future = channel.lock().unwrap();
-        future.send(Events {
-            type_: AsstMsg::InternalError,
-            params: Default::default(),
-        }).expect("Failed to send destroy event");
+        future
+            .send(Events {
+                type_: AsstMsg::InternalError,
+                params: Default::default(),
+            })
+            .expect("Failed to send destroy event");
         unsafe {
             AsstDestroy(self.handle);
         }

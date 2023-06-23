@@ -1,12 +1,12 @@
-mod fight;
-mod startup;
-mod close_down;
-
 use serde::{Deserialize, Serialize};
 
+pub use close_down::*;
 pub use fight::*;
 pub use startup::*;
-pub use close_down::*;
+
+mod close_down;
+mod fight;
+mod startup;
 
 pub trait StoppedTask<'a>: Deserialize<'a> + Serialize {
     fn to_json(&self) -> String {

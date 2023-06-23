@@ -1,9 +1,12 @@
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 pub use close_down::*;
 pub use fight::*;
 pub use recruit::*;
 pub use startup::*;
+
+use crate::binding::connection::MAAConnection;
 
 mod close_down;
 mod fight;
@@ -16,6 +19,10 @@ pub trait StoppedTask<'a>: Deserialize<'a> + Serialize {
     }
 
     fn name(&self) -> &'static str;
+
+    fn append_in(self, maa: &mut MAAConnection) -> Result<i32> {
+        maa.append_task(self)
+    }
 }
 
 pub enum ClientType {

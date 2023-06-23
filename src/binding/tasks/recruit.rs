@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::binding::tasks::{ClientType, Paused, Running, Server, State, StoppedTask};
+use crate::binding::tasks::{Paused, Server, State, StoppedTask};
 
 fn is_zero(v: &usize) -> bool {
     *v == 0

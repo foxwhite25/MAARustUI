@@ -4,7 +4,7 @@ use log::info;
 
 use maa_rust_ui::binding::connection::MAABuilder;
 use maa_rust_ui::binding::options::{MAAOption, TouchMode};
-use maa_rust_ui::binding::tasks::{ClientType, Fight, Recruit, Server, StartUp};
+use maa_rust_ui::binding::tasks::*;
 
 #[tokio::main]
 async fn main() {
@@ -21,15 +21,22 @@ async fn main() {
         .await
         .unwrap();
 
-    m.append_task(StartUp::new().set_client_type(ClientType::YoStarEN))
+    StartUp::new()
+        .set_client_type(ClientType::YoStarEN)
+        .append_in(&mut m)
         .unwrap();
-    m.append_task(
-        Fight::new()
-            .server(Server::US)
-            .client_type(ClientType::YoStarEN),
-    )
-    .unwrap();
-    m.append_task(Recruit::new().refresh(true).times(16).server(Server::US))
+
+    Fight::new()
+        .server(Server::US)
+        .client_type(ClientType::YoStarEN)
+        .append_in(&mut m)
+        .unwrap();
+
+    Recruit::new()
+        .refresh(true)
+        .times(16)
+        .server(Server::US)
+        .append_in(&mut m)
         .unwrap();
 
     m.start().unwrap();

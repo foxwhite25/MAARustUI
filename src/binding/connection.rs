@@ -1,10 +1,10 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::env;
 use std::ffi::{c_void, CStr, CString};
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::sync::Arc;
-use std::task::{Context, Poll, Waker};
+use std::task::{Context, Poll};
 
 use anyhow::{anyhow, Result};
 use futures::Future;
@@ -13,7 +13,7 @@ use serde_json::Value;
 use tokio::sync::Mutex;
 
 use crate::binding::bind::*;
-use crate::binding::event_handler::{maa_callback, CALLBACK_CHANNEL};
+use crate::binding::event_handler::{CALLBACK_CHANNEL, maa_callback};
 use crate::binding::events::*;
 use crate::binding::options::MAAOption;
 use crate::binding::resources::ItemMap;
@@ -31,8 +31,8 @@ pub struct MAAConnection {
 }
 
 fn find_it<P>(exe_name: P) -> Option<PathBuf>
-where
-    P: AsRef<Path>,
+    where
+        P: AsRef<Path>,
 {
     env::var_os("PATH").and_then(|paths| {
         env::split_paths(&paths)
@@ -199,7 +199,7 @@ impl<'a> MAABuilder<'a> {
         };
         let settings = self.maa_settings.to_map();
         for (k, v) in settings {
-            maa.set_option(k as AsstInstanceOptionKey, &v)?;
+            maa.set_option(k as AsstInstanceOptionKey, v)?;
         }
         maa.start_polling().await;
         let async_id = self.connect_with_adb(handle)?;
@@ -208,7 +208,7 @@ impl<'a> MAABuilder<'a> {
             id: async_id,
             wakes: maa.wakes.clone(),
         }
-        .await;
+            .await;
         match k {
             Value::Bool(b) => {
                 if b {

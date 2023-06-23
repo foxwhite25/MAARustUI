@@ -53,5 +53,5 @@ async fn main() {
     while m.is_running() {
         thread::sleep(std::time::Duration::from_secs(1));
     }
-    info!("MAA is stopped");
+    info!("MAA have stopped");
 }

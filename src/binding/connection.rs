@@ -15,20 +15,13 @@ use crate::binding::bind::*;
 use crate::binding::event_handler::{maa_callback, CALLBACK_CHANNEL};
 use crate::binding::events::*;
 use crate::binding::options::MAAOption;
-
-#[derive(Debug, Clone)]
-pub struct Task {
-    pub id: i32,
-    pub type_: String,
-    pub params: String,
-}
+use crate::binding::tasks::StoppedTask;
 
 #[derive(Debug)]
 pub struct MAAConnection {
     handle: AsstHandle,
     uuid: Arc<Mutex<Option<String>>>,
     target: String,
-    tasks: HashMap<i32, Task>,
     id: i64,
     pub wakes: Arc<Mutex<HashMap<i32, Value>>>,
 }
@@ -186,7 +179,6 @@ impl<'a> MAABuilder<'a> {
             handle,
             uuid: Arc::new(Mutex::new(None)),
             target: self.adb_address.to_string(),
-            tasks: HashMap::new(),
             id,
             wakes: Arc::new(Mutex::new(HashMap::new())),
         };
@@ -276,9 +268,22 @@ impl MAAConnection {
         });
     }
 
-    pub fn start(&self) {
-        unsafe {
-            AsstStart(self.handle);
+    pub fn append_task<'a>(&mut self, task: impl StoppedTask<'a>) -> Result<i32> {
+        let id = CString::new(task.name())?;
+        let c_task = CString::new(task.to_json())?;
+        debug!("Appending task: {}", task.name());
+        let ret = unsafe { AsstAppendTask(self.handle, id.as_ptr(), c_task.as_ptr()) };
+        Ok(ret)
+    }
+
+    pub fn start(&self) -> Result<()> {
+        info!("Starting MAA");
+        let ret = unsafe {
+            AsstStart(self.handle)
+        };
+        match ret {
+            1 => Ok(()),
+            _ => Err(anyhow!("Unknown Error: {ret}")),
         }
     }
 

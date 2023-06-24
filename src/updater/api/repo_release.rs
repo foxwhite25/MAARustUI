@@ -1,10 +1,14 @@
 use crate::updater::api::Version;
-use anyhow::Result;
 use futures::SinkExt;
 
 use serde::Deserialize;
 use serde::Serialize;
 use std::cmp::Ordering;
+use std::fs::File;
+use std::io::Write;
+use indicatif::{ProgressBar, ProgressState, ProgressStyle};
+use futures::StreamExt;
+use log::info;
 
 pub type RepoReleases = Vec<RepoRelease>;
 
@@ -52,7 +56,7 @@ fn is_std_version(version: &str) -> bool {
     !string_check
 }
 
-pub async fn query_repo_releases(version: Version) -> Result<RepoRelease> {
+pub async fn query_repo_releases(version: Version) -> anyhow::Result<RepoRelease> {
     let mut headers = reqwest::header::HeaderMap::new();
     // 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
     //                       'AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -131,7 +135,7 @@ fn compare_version(a: &str, b: &str) -> Ordering {
     Ordering::Equal
 }
 
-pub async fn check_update(version: &str, release_type: Version) -> Result<Asset> {
+pub async fn check_update(version: &str, release_type: Version) -> anyhow::Result<Asset> {
     let resp = query_repo_releases(release_type).await;
     if let Ok(resp) = resp {
         let latest_version = resp.tag_name;
@@ -159,6 +163,50 @@ pub async fn check_update(version: &str, release_type: Version) -> Result<Asset>
     }
 }
 
+pub async fn update(version: &str, release_type: Version) -> anyhow::Result<()> {
+    let asset = check_update(version, release_type).await?;
+    let url = asset.browser_download_url;
+    let resp = reqwest::get(&url).await?;
+    let mut file = tempfile::tempfile()?;
+    let total_size = resp.content_length().unwrap_or(0);
+    let mut stream = resp.bytes_stream();
+    let pb = ProgressBar::new(total_size);
+    pb.set_style(ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({eta})")
+        .unwrap()
+        .with_key("eta", |state: &ProgressState, w: &mut dyn std::fmt::Write| write!(w, "{:.1}s", state.eta().as_secs_f64()).unwrap())
+        .progress_chars("#>-"));
+    while let Some(item) = stream.next().await {
+        let item = item?;
+        file.write_all(&item)?;
+        pb.inc(item.len() as u64);
+    }
+    let mut zip = zip::ZipArchive::new(file)?;
+    // Extract all files
+    let unzip_dir = std::env::current_dir()?.join("unzip");
+    for i in 0..zip.len() {
+        let mut file = zip.by_index(i)?;
+        let outpath = match file.enclosed_name() {
+            Some(path) => unzip_dir.join(path),
+            None => continue,
+        };
+
+        info!("Extracting {} ...", outpath.display());
+
+        if (*file.name()).ends_with('/') {
+            std::fs::create_dir_all(&outpath)?;
+        } else {
+            if let Some(p) = outpath.parent() {
+                if !p.exists() {
+                    std::fs::create_dir_all(&p)?;
+                }
+            }
+            let mut outfile = std::fs::File::create(&outpath)?;
+            std::io::copy(&mut file, &mut outfile)?;
+        }
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -171,6 +219,16 @@ mod test {
         let resp = check_update(current_version, version).await;
         println!("{:?}", resp);
     }
+
+    #[tokio::test]
+    async fn test_update() {
+        env_logger::builder().filter_level(log::LevelFilter::Info).init();
+        let current_version = "v4.19.1";
+        let version = Version::Stable;
+        let resp = update(current_version, version).await;
+        println!("{:?}", resp);
+    }
+
 
     #[test]
     fn test_compare_version() {

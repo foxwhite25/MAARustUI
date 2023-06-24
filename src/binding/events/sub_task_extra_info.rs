@@ -30,6 +30,26 @@ struct Details {
     stars: Option<i64>,
     #[serde(default)]
     stats: Vec<Stat>,
+    #[serde(default)]
+    tags: Vec<String>,
+    level: Option<i64>,
+    #[serde(default)]
+    result: Vec<Result>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Result {
+    pub level: i64,
+    pub opers: Vec<Operator>,
+    pub tags: Vec<String>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Operator {
+    pub level: i64,
+    pub name: String,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -75,6 +95,16 @@ pub async fn handle_sub_task_extra_info(params: Value) {
             for stat in async_call_info.details.stats {
                 info!("{} x {}", stat.item_name, stat.quantity);
             }
+        }
+        "asst::AutoRecruitTask" if !async_call_info.details.result.is_empty() => {
+            let tags_str = async_call_info.details.tags
+                .iter()
+                .map(|tag| tag.as_str())
+                .collect::<Vec<&str>>()
+                .join(", ");
+            info!("Recruit tags: {}", tags_str);
+            let recruit_star_level = async_call_info.details.level.unwrap();
+            info!("Recruit star level: {}", recruit_star_level);
         }
         _ => {
             trace!("sub_task_extra_info: {:?}", async_call_info)

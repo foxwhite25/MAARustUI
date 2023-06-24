@@ -86,10 +86,7 @@ impl Mall<Paused> {
     }
 
     /// 设置信用溢出时是否强制购物，可选，默认 false。不支持运行中设置
-    pub fn force_buy_when_full(
-        mut self,
-        force_buy_when_full: bool,
-    ) -> Self {
+    pub fn force_buy_when_full(mut self, force_buy_when_full: bool) -> Self {
         self.force_shopping_if_credit_full = force_buy_when_full;
         self
     }

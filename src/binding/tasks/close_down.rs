@@ -12,14 +12,14 @@ pub struct CloseDown<T: State> {
     #[serde(skip)]
     _phantom: PhantomData<T>,
     #[serde(skip)]
-    id: Option<usize>
+    id: Option<usize>,
 }
 
 impl<T: State> CloseDown<T> {
     pub fn new() -> Self {
         CloseDown {
             _phantom: PhantomData,
-            id: None
+            id: None,
         }
     }
 }
@@ -32,7 +32,7 @@ impl CloseDown<Paused> {
     pub fn start(self) -> CloseDown<Running> {
         CloseDown {
             _phantom: PhantomData,
-            id: self.id
+            id: self.id,
         }
     }
 }

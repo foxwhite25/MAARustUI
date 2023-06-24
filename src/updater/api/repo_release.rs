@@ -1,14 +1,14 @@
 use crate::updater::api::Version;
 use futures::SinkExt;
 
+use futures::StreamExt;
+use indicatif::{ProgressBar, ProgressState, ProgressStyle};
+use log::info;
 use serde::Deserialize;
 use serde::Serialize;
 use std::cmp::Ordering;
 use std::fs::File;
 use std::io::Write;
-use indicatif::{ProgressBar, ProgressState, ProgressStyle};
-use futures::StreamExt;
-use log::info;
 
 pub type RepoReleases = Vec<RepoRelease>;
 
@@ -222,13 +222,14 @@ mod test {
 
     #[tokio::test]
     async fn test_update() {
-        env_logger::builder().filter_level(log::LevelFilter::Info).init();
+        env_logger::builder()
+            .filter_level(log::LevelFilter::Info)
+            .init();
         let current_version = "v4.19.1";
         let version = Version::Stable;
         let resp = update(current_version, version).await;
         println!("{:?}", resp);
     }
-
 
     #[test]
     fn test_compare_version() {

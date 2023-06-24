@@ -1,4 +1,4 @@
-use log::{info, trace};
+use log::{info, trace, warn};
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
@@ -97,14 +97,48 @@ pub async fn handle_sub_task_extra_info(params: Value) {
             }
         }
         "asst::AutoRecruitTask" if !async_call_info.details.result.is_empty() => {
-            let tags_str = async_call_info.details.tags
+            let tags_str = async_call_info
+                .details
+                .tags
                 .iter()
                 .map(|tag| tag.as_str())
                 .collect::<Vec<&str>>()
                 .join(", ");
             info!("Recruit tags: {}", tags_str);
             let recruit_star_level = async_call_info.details.level.unwrap();
-            info!("Recruit star level: {}", recruit_star_level);
+            if recruit_star_level >= 5 {
+                warn!("Good star level: {}", recruit_star_level);
+                let max_star_level = async_call_info
+                    .details
+                    .result
+                    .iter()
+                    .max_by_key(|result| result.level)
+                    .unwrap()
+                    .level;
+
+                for result in async_call_info
+                    .details
+                    .result
+                    .iter()
+                    .filter(|result| result.level == max_star_level)
+                {
+                    let opers_str = result
+                        .opers
+                        .iter()
+                        .map(|oper| oper.name.as_str())
+                        .collect::<Vec<&str>>()
+                        .join(", ");
+                    let tags_str = result
+                        .tags
+                        .iter()
+                        .map(|tag| tag.as_str())
+                        .collect::<Vec<&str>>()
+                        .join(", ");
+                    warn!("Tags Combo: [{}] | Operators: [{}]", tags_str, opers_str)
+                }
+            } else {
+                info!("Recruit star level: {}", recruit_star_level);
+            }
         }
         _ => {
             trace!("sub_task_extra_info: {:?}", async_call_info)

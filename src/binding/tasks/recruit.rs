@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::binding::tasks::{Paused, Server, State, StoppedTask};
+use crate::binding::tasks::{Paused, Running, Server, State, StoppedTask};
 
 fn is_zero(v: &usize) -> bool {
     *v == 0
@@ -16,6 +16,8 @@ fn is_zero(v: &usize) -> bool {
 pub struct Recruit<T: State> {
     #[serde(skip)]
     _phantom: PhantomData<T>,
+    #[serde(skip)]
+    id: Option<usize>,
 
     refresh: bool,
     select: Vec<usize>,
@@ -45,6 +47,7 @@ impl<T: State> Recruit<T> {
     pub fn new() -> Self {
         Recruit {
             _phantom: PhantomData,
+            id: None,
             refresh: false,
             select: vec![4],
             confirm: vec![3, 4],
@@ -146,9 +149,34 @@ impl Recruit<Paused> {
     pub fn new_paused() -> Self {
         Self::new()
     }
+
+    pub fn start(self) -> Recruit<Running> {
+        Recruit {
+            _phantom: PhantomData,
+            id: self.id,
+            refresh: self.refresh,
+            select: self.select,
+            confirm: self.confirm,
+            times: self.times,
+            set_time: self.set_time,
+            expedite: self.expedite,
+            expedite_times: self.expedite_times,
+            skip_robot: self.skip_robot,
+            recruitment_time: self.recruitment_time,
+            report_to_penguin: self.report_to_penguin,
+            penguin_id: self.penguin_id,
+            report_to_yituliu: self.report_to_yituliu,
+            yituliu_id: self.yituliu_id,
+            server: self.server,
+        }
+    }
 }
 
 impl<'a> StoppedTask<'a> for Recruit<Paused> {
+    fn set_id(&mut self, id: usize) {
+        self.id = Some(id);
+    }
+
     fn name(&self) -> &'static str {
         "Recruit"
     }

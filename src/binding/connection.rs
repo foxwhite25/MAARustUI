@@ -287,12 +287,12 @@ impl MAAConnection {
         });
     }
 
-    pub fn append_task<'a>(&mut self, task: impl StoppedTask<'a>) -> Result<i32> {
+    pub fn append_task<'a>(&self, task: &impl StoppedTask<'a>) -> Result<usize> {
         let id = CString::new(task.name())?;
         let c_task = CString::new(task.to_json())?;
         debug!("Appending task: {}", task.name());
         let ret = unsafe { AsstAppendTask(self.handle, id.as_ptr(), c_task.as_ptr()) };
-        Ok(ret)
+        Ok(ret as usize)
     }
 
     pub fn start(&self) -> Result<()> {

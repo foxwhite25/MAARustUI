@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::binding::tasks::{ClientType, Paused, Server, State, StoppedTask};
+use crate::binding::tasks::{ClientType, Paused, Running, Server, State, StoppedTask};
 
 fn is_zero(v: &usize) -> bool {
     *v == 0
@@ -16,6 +16,8 @@ fn is_zero(v: &usize) -> bool {
 pub struct Fight<T: State> {
     #[serde(skip)]
     _phantom: PhantomData<T>,
+    #[serde(skip)]
+    id: Option<usize>,
 
     /* Stage */
     #[serde(skip_serializing_if = "String::is_empty")]
@@ -48,6 +50,7 @@ impl<T: State> Fight<T> {
     pub fn new() -> Self {
         Fight {
             _phantom: PhantomData,
+            id: None,
             stage: String::new(),
             medicine: 0,
             expiring_medicine: 0,
@@ -150,9 +153,31 @@ impl Fight<Paused> {
     pub fn new_paused() -> Self {
         Self::new()
     }
+
+    pub fn start(self) -> Fight<Running> {
+        Fight {
+            _phantom: PhantomData,
+            id: self.id,
+            stage: self.stage,
+            medicine: self.medicine,
+            expiring_medicine: self.expiring_medicine,
+            stone: self.stone,
+            times: self.times,
+            drop: self.drop,
+            report_to_penguin: self.report_to_penguin,
+            penguin_id: self.penguin_id,
+            server: self.server,
+            client_type: self.client_type,
+            dr_grandet: self.dr_grandet,
+        }
+    }
 }
 
 impl<'a> StoppedTask<'a> for Fight<Paused> {
+    fn set_id(&mut self, id: usize) {
+        self.id = Some(id);
+    }
+
     fn name(&self) -> &'static str {
         "Fight"
     }

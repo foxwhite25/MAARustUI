@@ -20,13 +20,18 @@ pub trait StoppedTask<'a>: Deserialize<'a> + Serialize {
         serde_json::to_string(self).unwrap()
     }
 
+    fn set_id(&mut self, id: usize);
+
     fn name(&self) -> &'static str;
 
-    fn append_in(self, maa: &mut MAAConnection) -> Result<i32> {
-        maa.append_task(self)
+    fn append_in(mut self, maa: &mut MAAConnection) -> Result<Self> {
+        let id = maa.append_task(&self)?;
+        self.set_id(id);
+        Ok(self)
     }
 }
 
+#[derive(Copy, Clone)]
 pub enum ClientType {
     Official,
     Bilibili,
@@ -49,6 +54,7 @@ impl AsRef<str> for ClientType {
     }
 }
 
+#[derive(Copy, Clone)]
 pub enum Server {
     CN,
     JP,

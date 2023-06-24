@@ -14,6 +14,8 @@ async fn main() {
         .filter_level(log::LevelFilter::Debug)
         .init();
     let setting = MAAOption::default().with_touch_mode(TouchMode::MAATouch);
+    let client = ClientType::YoStarEN;
+    let server = Server::US;
 
     let mut m = MAABuilder::new("/home/fox_white/MAA", "192.168.240.112:5555")
         .with_work_dir("/home/fox_white/LatexProject/MaaAssistantArknights/src/maa_rust_ui/logs")
@@ -23,32 +25,36 @@ async fn main() {
         .await
         .unwrap();
 
-    StartUp::new()
-        .set_client_type(ClientType::YoStarEN)
+    let _start_up = StartUp::new()
+        .set_client_type(client)
         .append_in(&mut m)
-        .unwrap();
+        .unwrap()
+        .start();
 
-    Fight::new()
+    let _fight = Fight::new()
         .use_medicine(1)
-        .server(Server::US)
-        .client_type(ClientType::YoStarEN)
+        .server(server)
+        .client_type(client)
         .append_in(&mut m)
-        .unwrap();
+        .unwrap()
+        .start();
 
-    Recruit::new()
+    let _recruit = Recruit::new()
         .refresh(true)
         .times(16)
-        .server(Server::US)
+        .server(server)
         .append_in(&mut m)
-        .unwrap();
+        .unwrap()
+        .start();
 
-    Mall::new_paused()
-        .set_shopping(true)
-        .set_buy_first(vec![ShopItem::LMD, ShopItem::RecruitmentPermit])
-        .set_blacklist(vec![ShopItem::FurniturePart, ShopItem::FurniturePart])
-        .set_force_shopping_if_credit_full(true)
+    let _mall = Mall::new()
+        .shopping(true)
+        .buy_first(vec![ShopItem::LMD, ShopItem::RecruitmentPermit])
+        .blacklist(vec![ShopItem::CarbonStick, ShopItem::FurniturePart])
+        .force_buy_when_full(true)
         .append_in(&mut m)
-        .unwrap();
+        .unwrap()
+        .start();
 
     info!(
         "You are running MAA version: {}; MAARustUI: v{}, enjoy!",

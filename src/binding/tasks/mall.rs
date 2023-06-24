@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::binding::tasks::{Paused, State, StoppedTask};
+use crate::binding::tasks::{Paused, Running, State, StoppedTask};
 
 pub enum ShopItem {
     LMD,
@@ -33,6 +33,8 @@ impl AsRef<str> for ShopItem {
 pub struct Mall<T: State> {
     #[serde(skip)]
     _phantom: PhantomData<T>,
+    #[serde(skip)]
+    id: Option<usize>,
 
     shopping: bool,
     buy_first: Vec<String>,
@@ -45,6 +47,7 @@ impl<T: State> Mall<T> {
     pub fn new() -> Self {
         Mall {
             _phantom: PhantomData,
+            id: None,
             shopping: false,
             buy_first: Vec::new(),
             blacklist: Vec::new(),
@@ -59,13 +62,13 @@ impl Mall<Paused> {
     }
 
     /// 设置是否购物，可选，默认 false。不支持运行中设置
-    pub fn set_shopping(mut self, shopping: bool) -> Self {
+    pub fn shopping(mut self, shopping: bool) -> Self {
         self.shopping = shopping;
         self
     }
 
     /// 设置优先购买的物品，可选，默认为空。不支持运行中设置
-    pub fn set_buy_first(mut self, buy_first: Vec<ShopItem>) -> Self {
+    pub fn buy_first(mut self, buy_first: Vec<ShopItem>) -> Self {
         self.buy_first = buy_first
             .into_iter()
             .map(|x| x.as_ref().to_string())
@@ -74,7 +77,7 @@ impl Mall<Paused> {
     }
 
     /// 设置黑名单，可选，默认为空。不支持运行中设置
-    pub fn set_blacklist(mut self, blacklist: Vec<ShopItem>) -> Self {
+    pub fn blacklist(mut self, blacklist: Vec<ShopItem>) -> Self {
         self.blacklist = blacklist
             .into_iter()
             .map(|x| x.as_ref().to_string())
@@ -83,16 +86,31 @@ impl Mall<Paused> {
     }
 
     /// 设置信用溢出时是否强制购物，可选，默认 false。不支持运行中设置
-    pub fn set_force_shopping_if_credit_full(
+    pub fn force_buy_when_full(
         mut self,
-        force_shopping_if_credit_full: bool,
+        force_buy_when_full: bool,
     ) -> Self {
-        self.force_shopping_if_credit_full = force_shopping_if_credit_full;
+        self.force_shopping_if_credit_full = force_buy_when_full;
         self
+    }
+
+    pub fn start(self) -> Mall<Running> {
+        Mall {
+            _phantom: PhantomData,
+            id: self.id,
+            shopping: self.shopping,
+            buy_first: self.buy_first,
+            blacklist: self.blacklist,
+            force_shopping_if_credit_full: self.force_shopping_if_credit_full,
+        }
     }
 }
 
 impl<'a> StoppedTask<'a> for Mall<Paused> {
+    fn set_id(&mut self, id: usize) {
+        self.id = Some(id);
+    }
+
     fn name(&self) -> &'static str {
         "Mall"
     }

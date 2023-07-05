@@ -3,24 +3,47 @@ use std::marker::PhantomData;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::binding::tasks::{Paused, Running, State, StoppedTask};
+use crate::binding::tasks::{Paused, Running, Server, State, StoppedTask};
 
 pub enum ShopItem {
     LMD,
     RecruitmentPermit,
-    ExpeditionPermit,
+    ExpeditedPermit,
     CarbonStick,
     FurniturePart,
 }
 
-impl AsRef<str> for ShopItem {
-    fn as_ref(&self) -> &str {
-        match self {
-            ShopItem::LMD => "龙门币",
-            ShopItem::RecruitmentPermit => "招聘许可",
-            ShopItem::ExpeditionPermit => "刷图许可",
-            ShopItem::CarbonStick => "碳",
-            ShopItem::FurniturePart => "家具",
+impl ShopItem {
+    fn localize(&self, server: &Server) -> &'static str {
+        match server {
+            Server::CN => match self {
+                ShopItem::LMD => "龙门币",
+                ShopItem::RecruitmentPermit => "招聘",
+                ShopItem::ExpeditedPermit => "加急",
+                ShopItem::CarbonStick => "碳",
+                ShopItem::FurniturePart => "家具",
+            },
+            Server::JP => match self {
+                ShopItem::LMD => "龍門幣",
+                ShopItem::RecruitmentPermit => "採用",
+                ShopItem::ExpeditedPermit => "",
+                ShopItem::CarbonStick => "炭素",
+                ShopItem::FurniturePart => "家具",
+            },
+            Server::US => match self {
+                ShopItem::LMD => "LMD",
+                ShopItem::RecruitmentPermit => "Recruitment",
+                ShopItem::ExpeditedPermit => "Expedited",
+                ShopItem::CarbonStick => "Carbon",
+                ShopItem::FurniturePart => "Furniture",
+            },
+            Server::KR => match self {
+                ShopItem::LMD => "LMD",
+                ShopItem::RecruitmentPermit => "채용 허가증",
+                ShopItem::ExpeditedPermit => "탐색 허가증",
+                ShopItem::CarbonStick => "탄소",
+                ShopItem::FurniturePart => "가구 부품",
+            },
         }
     }
 }
@@ -68,19 +91,19 @@ impl Mall<Paused> {
     }
 
     /// 设置优先购买的物品，可选，默认为空。不支持运行中设置
-    pub fn buy_first(mut self, buy_first: Vec<ShopItem>) -> Self {
+    pub fn buy_first(mut self, buy_first: Vec<ShopItem>, server: &Server) -> Self {
         self.buy_first = buy_first
             .into_iter()
-            .map(|x| x.as_ref().to_string())
+            .map(|x| x.localize(server).to_string())
             .collect();
         self
     }
 
     /// 设置黑名单，可选，默认为空。不支持运行中设置
-    pub fn blacklist(mut self, blacklist: Vec<ShopItem>) -> Self {
+    pub fn blacklist(mut self, blacklist: Vec<ShopItem>, server: &Server) -> Self {
         self.blacklist = blacklist
             .into_iter()
-            .map(|x| x.as_ref().to_string())
+            .map(|x| x.localize(server).to_string())
             .collect();
         self
     }

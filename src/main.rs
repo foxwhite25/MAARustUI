@@ -49,8 +49,8 @@ async fn main() {
 
     let _mall = Mall::new()
         .shopping(true)
-        .buy_first(vec![ShopItem::LMD, ShopItem::RecruitmentPermit])
-        .blacklist(vec![ShopItem::CarbonStick, ShopItem::FurniturePart])
+        .buy_first(vec![ShopItem::LMD, ShopItem::RecruitmentPermit], &server)
+        .blacklist(vec![ShopItem::CarbonStick, ShopItem::FurniturePart], &server)
         .force_buy_when_full(true)
         .append_in(&mut m)
         .unwrap()

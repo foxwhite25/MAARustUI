@@ -6,6 +6,7 @@ pub use fight::*;
 pub use mall::*;
 pub use recruit::*;
 pub use startup::*;
+pub use award::*;
 
 use crate::binding::connection::MAAConnection;
 
@@ -14,6 +15,8 @@ mod fight;
 mod mall;
 mod recruit;
 mod startup;
+mod award;
+mod roguelike;
 
 pub trait StoppedTask<'a>: Deserialize<'a> + Serialize {
     fn to_json(&self) -> String {

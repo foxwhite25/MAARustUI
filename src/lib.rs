@@ -2,3 +2,4 @@
 
 pub mod binding;
 pub mod updater;
+pub mod gui;
